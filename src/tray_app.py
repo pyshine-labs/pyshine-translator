@@ -390,9 +390,9 @@ class SettingsDialog(QDialog):
         if current_row < 0:
             return
         
-        model = self.provider_model_combo.currentText()
+        model = self.provider_model_combo.currentData()
         if not model:
-            model = self.provider_model_combo.currentData()
+            model = self.provider_model_combo.currentText()
         
         if model is None:
             model = ""

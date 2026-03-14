@@ -193,6 +193,11 @@ Logs are written to:
 
 ## Changelog
 
+### v1.3.3 (2026)
+- **Fixed model selection bug**: Now correctly saves model name instead of display text
+- **Fixed "model not found" error**: Resolved issue where selected model couldn't be found
+- **Improved model handling**: Properly extracts model name from dropdown data
+
 ### v1.3.2 (2026)
 - **Fixed TypeError**: Resolved "setEnabled called with wrong argument types" error
 - **Fixed button enable logic**: Changed from string to boolean check for URL field
