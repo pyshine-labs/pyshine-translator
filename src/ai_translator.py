@@ -362,6 +362,56 @@ class OfflineTranslator:
             logger.error("Error checking translation availability: %s", e)
             return False
     
+    def _ensure_language_pair(self, source_lang: str, target_lang: str) -> bool:
+        """Ensure a language pair is installed, auto-install if needed."""
+        if not OFFLINE_TRANSLATOR_AVAILABLE:
+            return False
+        
+        source = self._normalize_lang_code(source_lang)
+        target = self._normalize_lang_code(target_lang)
+        
+        if self._installed_languages is None:
+            self._installed_languages = argostranslate.translate.get_installed_languages()
+        
+        from_language = None
+        to_language = None
+        
+        for lang in self._installed_languages:
+            if lang.code == source:
+                from_language = lang
+            if lang.code == target:
+                to_language = lang
+        
+        if from_language and to_language:
+            translation = from_language.get_translation(to_language)
+            if translation:
+                return True
+        
+        logger.info("Auto-installing language pair: %s -> %s", source, target)
+        try:
+            available_packages = argostranslate.package.get_available_packages()
+            
+            for pkg in available_packages:
+                if pkg.from_code == source and pkg.to_code == target:
+                    argostranslate.package.install_from_path(pkg.download())
+                    self._installed_languages = None
+                    logger.info("Successfully installed %s -> %s", source, target)
+                    return True
+            
+            for pkg in available_packages:
+                if pkg.to_code == source and pkg.from_code == target:
+                    argostranslate.package.install_from_path(pkg.download())
+                    self._installed_languages = None
+                    logger.info("Successfully installed %s -> %s (reverse pair)", target, source)
+                    return True
+            
+            logger.warning("Language pair %s -> %s not found in available packages", source, target)
+            return False
+            
+        except Exception as e:
+            logger.error("Failed to auto-install language pair: %s", e)
+            return False
+
     def translate(self, text: str, source_lang: str, target_lang: str) -> Optional[str]:
         """Translate text using offline argostranslate."""
         if not OFFLINE_TRANSLATOR_AVAILABLE:
@@ -376,6 +426,10 @@ class OfflineTranslator:
             if cache_key in self._translation_cache:
                 return self._translation_cache[cache_key]
             
+            if not self._ensure_language_pair(source, target):
+                logger.error("Could not install language pair %s -> %s", source, target)
+                return None
+            
             if self._installed_languages is None:
                 self._installed_languages = argostranslate.translate.get_installed_languages()
             
@@ -388,12 +442,8 @@ class OfflineTranslator:
                 if lang.code == target:
                     to_language = lang
             
-            if from_language is None:
-                logger.error("Source language not installed: %s", source)
-                return None
-            
-            if to_language is None:
-                logger.error("Target language not installed: %s", target)
+            if from_language is None or to_language is None:
+                logger.error("Languages not available after installation: %s, %s", source, target)
                 return None
             
             translation = from_language.get_translation(to_language)

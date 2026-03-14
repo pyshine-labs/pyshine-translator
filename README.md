@@ -184,6 +184,11 @@ Logs are written to:
 
 ## Changelog
 
+### v1.2.0 (2026)
+- **Auto-install language models**: Offline translation now auto-downloads required language pairs on first use
+- Improved error handling for missing language models
+- Fixed googletrans compatibility issues with newer httpcore versions
+
 ### v1.1.0 (2026)
 - Added **offline translation** backend using Argos Translate
 - CPU-compatible local translation - works without internet!
