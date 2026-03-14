@@ -184,6 +184,9 @@ Logs are written to:
 
 ## Changelog
 
+### v1.2.1 (2026)
+- **Fixed bidirectional translation** for offline mode - now correctly uses detected language as source
+
 ### v1.2.0 (2026)
 - **Auto-install language models**: Offline translation now auto-downloads required language pairs on first use
 - Improved error handling for missing language models

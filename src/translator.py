@@ -194,16 +194,18 @@ class TranslationService:
         
         backend = self.config.get("translation_backend", "offline")
         
+        actual_source_lang = detected_lang if (bidirectional and detected_lang) else source_language
+        
         if backend == "offline":
             if AI_TRANSLATOR_AVAILABLE and is_offline_available():
                 offline_translator = get_offline_translator()
                 try:
-                    result_text = offline_translator.translate(text, source_language, final_target)
+                    result_text = offline_translator.translate(text, actual_source_lang, final_target)
                     if result_text:
-                        logger.info("Offline translated %d chars to %s", len(text), final_target)
+                        logger.info("Offline translated %d chars from %s to %s", len(text), actual_source_lang, final_target)
                         return TranslationResult(
                             text=result_text,
-                            source_language=source_language,
+                            source_language=actual_source_lang,
                             target_language=final_target,
                             confidence=None,
                             backend="Offline (Argos)"
@@ -211,7 +213,7 @@ class TranslationService:
                     else:
                         return TranslationResult(
                             text="",
-                            source_language=source_language,
+                            source_language=actual_source_lang,
                             target_language=final_target,
                             error="Offline translation not available for this language pair. Install language models.",
                             backend="Offline"
@@ -220,7 +222,7 @@ class TranslationService:
                     logger.exception("Offline translation failed: %s", e)
                     return TranslationResult(
                         text="",
-                        source_language=source_language,
+                        source_language=actual_source_lang,
                         target_language=final_target,
                         error=f"Offline translation error: {str(e)}",
                         backend="Offline"
@@ -228,7 +230,7 @@ class TranslationService:
             else:
                 return TranslationResult(
                     text="",
-                    source_language=source_language,
+                    source_language=actual_source_lang,
                     target_language=final_target,
                     error="Offline translation not available. Install argostranslate: pip install argostranslate",
                     backend="Offline"
