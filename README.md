@@ -193,6 +193,11 @@ Logs are written to:
 
 ## Changelog
 
+### v1.2.8 (2026)
+- **Fixed macOS tray icon visibility**: Added macOS-specific fixes to ensure tray icon appears in menu bar
+- **Prevented garbage collection**: Keep reference to tray app to prevent icon from disappearing
+- **Added visibility logging**: Better debugging for tray icon display issues
+
 ### v1.2.7 (2026)
 - **Fixed hotkey support for macOS/Linux**: Replaced Windows-only `keyboard` library with cross-platform `pynput`
 - **Added pyperclip dependency**: For reliable clipboard access across all platforms

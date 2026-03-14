@@ -470,7 +470,15 @@ class SystemTrayApp(QWidget):
         self.tray_menu.addAction(self.exit_action)
         
         self.tray_icon.setContextMenu(self.tray_menu)
+        
+        # macOS-specific: Force tray icon to be visible
+        import platform
+        if platform.system() == 'Darwin':
+            self.tray_icon.setVisible(True)
+            logger.info("macOS: Forced tray icon visibility")
+        
         self.tray_icon.show()
+        logger.info("Tray icon shown, visible: %s", self.tray_icon.isVisible())
         
         hotkey = self.config.get("hotkey", "ctrl+shift+t")
         self.show_notification("Desktop Translator", f"Application started. Press {hotkey} to translate.")
@@ -546,8 +554,11 @@ def main():
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
     
-    # Create system tray app
+    # Create system tray app and keep reference to prevent garbage collection
     tray_app = SystemTrayApp()
+    
+    # Keep reference to tray_app to prevent garbage collection
+    app.tray_app = tray_app
     
     logger.info("Desktop Translator started")
     
