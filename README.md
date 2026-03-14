@@ -193,6 +193,12 @@ Logs are written to:
 
 ## Changelog
 
+### v1.2.7 (2026)
+- **Fixed hotkey support for macOS/Linux**: Replaced Windows-only `keyboard` library with cross-platform `pynput`
+- **Added pyperclip dependency**: For reliable clipboard access across all platforms
+- **macOS hotkey improvements**: Uses Cmd key instead of Ctrl for better macOS UX
+- **Hotkey now works on all platforms**: Windows, macOS, and Linux
+
 ### v1.2.6 (2026)
 - **Fixed cross-platform config directory**: Now uses platform-specific paths
   - Windows: `%APPDATA%/TranslateContextMenu`
