@@ -184,6 +184,9 @@ Logs are written to:
 
 ## Changelog
 
+### v1.2.2 (2026)
+- **Fixed notification message** to show actual configured hotkey instead of hardcoded value
+
 ### v1.2.1 (2026)
 - **Fixed bidirectional translation** for offline mode - now correctly uses detected language as source
 

@@ -472,8 +472,8 @@ class SystemTrayApp(QWidget):
         self.tray_icon.setContextMenu(self.tray_menu)
         self.tray_icon.show()
         
-        # Show startup notification
-        self.show_notification("Desktop Translator", "Application started. Press Ctrl+Shift+T to translate.")
+        hotkey = self.config.get("hotkey", "ctrl+shift+t")
+        self.show_notification("Desktop Translator", f"Application started. Press {hotkey} to translate.")
         
         # Connect double-click
         self.tray_icon.activated.connect(self.on_tray_activated)

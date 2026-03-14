@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyshine_translator"
-version = "1.2.1"
+version = "1.2.2"
 description = "Desktop translator with AI support - translate selected text with a global hotkey"
 readme = "README.md"
 requires-python = ">=3.8"
