@@ -40,6 +40,9 @@ class HotkeyManager:
         self._listener_thread = None
         self._listener = None
         self._hotkey_str = self.config.get("hotkey", "ctrl+shift+t")
+        self._pressed_keys = set()
+        self._last_trigger_time = 0
+        self._trigger_cooldown = 0.5
         
     def start(self):
         """Start listening for hotkey."""
@@ -138,39 +141,63 @@ class HotkeyManager:
     
     def _on_press(self, key):
         """Handle key press events."""
-        pass
+        try:
+            key_name = self._get_key_name(key)
+            if key_name:
+                self._pressed_keys.add(key_name)
+                logger.debug("Key pressed: %s, currently pressed: %s", key_name, self._pressed_keys)
+        except Exception as e:
+            logger.debug("Error tracking key press: %s", e)
     
     def _on_release(self, key):
         """Handle key release events and check for hotkey."""
-        if self._hotkey and key == self._hotkey[-1]:
-            # Check if all modifier keys are pressed
-            try:
-                # Get current pressed keys
-                current_pressed = set()
+        try:
+            key_name = self._get_key_name(key)
+            if key_name:
+                self._pressed_keys.discard(key_name)
+                logger.debug("Key released: %s, currently pressed: %s", key_name, self._pressed_keys)
                 
-                # Check each modifier
-                for modifier in self._hotkey[:-1]:
-                    try:
-                        if hasattr(modifier, 'name'):
-                            # For special keys like ctrl, shift
-                            if modifier == keyboard.Key.ctrl:
-                                current_pressed.add('ctrl')
-                            elif modifier == keyboard.Key.shift:
-                                current_pressed.add('shift')
-                            elif modifier == keyboard.Key.alt:
-                                current_pressed.add('alt')
-                            elif modifier == keyboard.Key.cmd:
-                                current_pressed.add('cmd')
-                    except Exception:
-                        pass
-                
-                # Simulate checking if modifiers are pressed
-                # This is a simplified version - in practice, you'd need to track key states
-                # For now, we'll trigger on the final key release
-                self._on_hotkey_triggered()
-                
-            except Exception as e:
-                logger.debug("Error checking hotkey: %s", e)
+                # Check if this key release completes the hotkey combination
+                if self._check_hotkey():
+                    current_time = time.time()
+                    if current_time - self._last_trigger_time >= self._trigger_cooldown:
+                        self._last_trigger_time = current_time
+                        self._on_hotkey_triggered()
+                    else:
+                        logger.debug("Hotkey triggered too recently, ignoring (cooldown: %.2fs)", self._trigger_cooldown)
+        except Exception as e:
+            logger.debug("Error tracking key release: %s", e)
+    
+    def _get_key_name(self, key):
+        """Get a normalized key name for comparison."""
+        try:
+            if hasattr(key, 'name'):
+                return key.name
+            elif hasattr(key, 'char'):
+                return key.char
+            return str(key)
+        except Exception:
+            return None
+    
+    def _check_hotkey(self):
+        """Check if the current pressed keys match the hotkey."""
+        if not self._hotkey:
+            return False
+        
+        try:
+            required_keys = set()
+            for key in self._hotkey:
+                key_name = self._get_key_name(key)
+                if key_name:
+                    required_keys.add(key_name)
+            
+            if self._pressed_keys == required_keys:
+                logger.info("Hotkey combination detected: %s", self._hotkey_str)
+                return True
+        except Exception as e:
+            logger.debug("Error checking hotkey: %s", e)
+        
+        return False
     
     def _on_hotkey_triggered(self):
         """Callback when hotkey is pressed."""
