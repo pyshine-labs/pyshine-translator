@@ -1,0 +1,10 @@
+include README.md
+include LICENSE
+include pyproject.toml
+include requirements.txt
+recursive-include icons *.png *.ico *.svg
+recursive-include src *.py
+exclude upload_pypi.py
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude *.egg-info

@@ -1,0 +1,88 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyshine_translator"
+version = "1.0.0"
+description = "Desktop translator with AI support - translate selected text with a global hotkey"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+authors = [
+    {name = "PyShine", email = "python2ai@gmail.com"}
+]
+keywords = [
+    "translator",
+    "translation",
+    "ai",
+    "ollama",
+    "openai",
+    "desktop",
+    "hotkey",
+    "system-tray"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: X11 Applications :: Qt",
+    "Environment :: Win32 (MS Windows)",
+    "Environment :: MacOS X",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Text Processing :: Linguistic",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "PySide6>=6.5.0",
+    "googletrans==4.0.0rc1",
+    "langdetect>=1.0.9",
+    "keyboard>=0.13.5",
+    "pyautogui>=0.9.54",
+    "pynput>=1.7.6",
+    "requests>=2.31.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "build>=0.10.0",
+    "twine>=4.0.0",
+]
+
+[project.scripts]
+pyshine-translator = "src.tray_app:main"
+pyshine-translate = "src.tray_app:main"
+
+[project.gui-scripts]
+pyshine-translator-gui = "src.tray_app:main"
+
+[project.urls]
+Homepage = "https://pyshine.com"
+Documentation = "https://github.com/pyshine-labs/pyshine-translator#readme"
+Repository = "https://github.com/pyshine-labs/pyshine-translator.git"
+Issues = "https://github.com/pyshine-labs/pyshine-translator/issues"
+
+[tool.setuptools]
+packages = ["src"]
+
+[tool.setuptools.package-data]
+src = ["../icons/*.png", "../icons/*.ico"]
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
