@@ -193,6 +193,13 @@ Logs are written to:
 
 ## Changelog
 
+### v1.2.6 (2026)
+- **Fixed cross-platform config directory**: Now uses platform-specific paths
+  - Windows: `%APPDATA%/TranslateContextMenu`
+  - macOS: `~/Library/Application Support/PyShineTranslator`
+  - Linux: `~/.config/pyshine-translator`
+- App now works on macOS and Linux!
+
 ### v1.2.5 (2026)
 - **Added upper bounds** to all dependencies to speed up pip dependency resolution
 - This significantly reduces installation time on macOS/Linux

@@ -35,14 +35,23 @@ class ConfigManager:
         
         Args:
             config_dir: Directory where config file resides. If None, uses 
-                        %APPDATA%/TranslateContextMenu.
+                        platform-specific config directory.
             config_filename: Name of config file.
         """
         if config_dir is None:
-            appdata = os.getenv("APPDATA")
-            if not appdata:
-                raise RuntimeError("APPDATA environment variable not found")
-            config_dir = os.path.join(appdata, "TranslateContextMenu")
+            import platform
+            system = platform.system()
+            
+            if system == "Windows":
+                appdata = os.getenv("APPDATA")
+                if not appdata:
+                    raise RuntimeError("APPDATA environment variable not found")
+                config_dir = os.path.join(appdata, "TranslateContextMenu")
+            elif system == "Darwin":
+                config_dir = os.path.expanduser("~/Library/Application Support/PyShineTranslator")
+            else:
+                config_dir = os.path.expanduser("~/.config/pyshine-translator")
+        
         self.config_dir = Path(config_dir)
         self.config_path = self.config_dir / config_filename
         self._config = None
