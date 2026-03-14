@@ -193,6 +193,10 @@ Logs are written to:
 
 ## Changelog
 
+### v1.3.1 (2026)
+- **Fixed bug**: Resolved "NoneType has no attribute strip" error when saving provider without model
+- **Improved error handling**: Better handling of None values in model selection
+
 ### v1.3.0 (2026)
 - **Auto-fetch Ollama models**: Added "Fetch Models" button to automatically retrieve available models from any Ollama URL
 - **Improved model selection**: Changed model field to dropdown combo box for easier selection

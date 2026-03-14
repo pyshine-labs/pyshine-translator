@@ -394,12 +394,15 @@ class SettingsDialog(QDialog):
         if not model:
             model = self.provider_model_combo.currentData()
         
+        if model is None:
+            model = ""
+        
         provider = {
             "name": self.provider_name_edit.text().strip(),
             "provider_type": self.provider_type_combo.currentText(),
             "api_url": self.provider_url_edit.text().strip(),
             "api_key": self.provider_key_edit.text().strip(),
-            "model": model.strip(),
+            "model": model.strip() if model else "",
             "model_type": "chat"
         }
         
