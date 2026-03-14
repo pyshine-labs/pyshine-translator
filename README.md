@@ -193,6 +193,11 @@ Logs are written to:
 
 ## Changelog
 
+### v1.3.2 (2026)
+- **Fixed TypeError**: Resolved "setEnabled called with wrong argument types" error
+- **Fixed button enable logic**: Changed from string to boolean check for URL field
+- **Improved stability**: Better handling of empty URL strings
+
 ### v1.3.1 (2026)
 - **Fixed bug**: Resolved "NoneType has no attribute strip" error when saving provider without model
 - **Improved error handling**: Better handling of None values in model selection

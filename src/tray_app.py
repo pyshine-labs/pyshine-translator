@@ -330,7 +330,7 @@ class SettingsDialog(QDialog):
     def on_url_changed(self, text):
         """Handle URL text change."""
         is_ollama = self.provider_type_combo.currentText() == "ollama"
-        self.fetch_models_btn.setEnabled(is_ollama and text.strip())
+        self.fetch_models_btn.setEnabled(is_ollama and len(text.strip()) > 0)
     
     def fetch_models_from_url(self):
         """Fetch available models from the entered Ollama URL."""
