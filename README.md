@@ -35,12 +35,6 @@ cd pyshine-translator
 pip install -e .
 ```
 
-### Using pip with GitHub
-
-```bash
-pip install git+https://github.com/pyshine-labs/pyshine-translator.git
-```
-
 ## Quick Start
 
 ### Command Line
@@ -49,12 +43,6 @@ After installation, run the application:
 
 ```bash
 pyshine-translator
-```
-
-Or alternatively:
-
-```bash
-python -m src.tray_app
 ```
 
 ### From Python
@@ -138,8 +126,6 @@ pyshine-translator/
 ├── main.py                  # Entry point
 ├── pyproject.toml           # Package configuration
 ├── requirements.txt         # Dependencies
-├── MANIFEST.in              # Package manifest
-├── LICENSE                  # MIT License
 └── README.md                # This file
 ```
 
@@ -169,70 +155,6 @@ Logs are written to:
 - **Windows**: `%APPDATA%\TranslateContextMenu\translation.log`
 - **macOS**: `~/Library/Application Support/TranslateContextMenu/translation.log`
 - **Linux**: `~/.config/TranslateContextMenu/translation.log`
-
-## Building from Source
-
-### Development Setup
-
-```bash
-git clone https://github.com/pyshine-labs/pyshine-translator.git
-cd pyshine-translator
-python -m venv venv
-source venv/bin/activate  # Linux/macOS
-# or
-.\venv\Scripts\activate  # Windows
-
-pip install -e ".[dev]"
-```
-
-### Build Distribution
-
-```bash
-pip install build
-python -m build
-```
-
-This creates:
-- `dist/pyshine_translator-1.0.0.tar.gz` (source distribution)
-- `dist/pyshine_translator-1.0.0-py3-none-any.whl` (wheel)
-
-### Upload to PyPI
-
-```bash
-pip install twine
-twine upload dist/*
-```
-
-## Troubleshooting
-
-### Hotkey Not Working
-- Make sure no other application is using the same hotkey
-- Try running as administrator (Windows)
-- Check if the application is enabled in the tray menu
-
-### Ollama Models Not Showing
-- Ensure Ollama is running: `ollama serve`
-- Check if models are installed: `ollama list`
-- Pull a model if needed: `ollama pull llama2`
-
-### Translation Fails
-- Check your internet connection (for Google Translate)
-- Verify API key for OpenAI providers
-- Check logs in the configuration directory
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
