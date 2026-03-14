@@ -6,6 +6,9 @@ import os
 import logging
 from typing import Optional, List
 
+# Fix OpenMP conflict on Windows
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
+
 logger = logging.getLogger(__name__)
 
 try:

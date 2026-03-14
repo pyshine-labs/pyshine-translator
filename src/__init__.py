@@ -5,7 +5,7 @@ A system tray application that translates selected text using a global hotkey.
 Supports Google Translate and AI providers (OpenAI, Ollama, custom).
 """
 
-__version__ = "1.3.3"
+__version__ = "1.3.4"
 __author__ = "PyShine"
 __email__ = "python2ai@gmail.com"
 __description__ = "Desktop translator with AI support - translate selected text with a hotkey"

@@ -193,6 +193,11 @@ Logs are written to:
 
 ## Changelog
 
+### v1.3.4 (2026)
+- **Fixed OpenMP conflict on Windows**: Resolved libiomp5md.dll initialization error
+- **Added environment variable fix**: Automatically sets KMP_DUPLICATE_LIB_OK=TRUE
+- **Improved startup stability**: No more OpenMP warnings or crashes
+
 ### v1.3.3 (2026)
 - **Fixed model selection bug**: Now correctly saves model name instead of display text
 - **Fixed "model not found" error**: Resolved issue where selected model couldn't be found
