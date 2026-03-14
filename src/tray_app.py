@@ -9,6 +9,11 @@ from typing import Optional, List
 # Fix OpenMP conflict on Windows
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 
+# Suppress OpenMP warning on Windows
+if sys.platform == 'win32':
+    import warnings
+    warnings.filterwarnings('ignore', message='.*OpenMP.*')
+
 logger = logging.getLogger(__name__)
 
 try:

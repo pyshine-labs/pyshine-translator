@@ -193,6 +193,11 @@ Logs are written to:
 
 ## Changelog
 
+### v1.3.6 (2026)
+- **Suppressed OpenMP warnings**: Added warning filter to hide OpenMP error messages
+- **Improved user experience**: No more scary error messages on Windows
+- **App works normally**: OpenMP warnings are cosmetic, not functional
+
 ### v1.3.5 (2026)
 - **Fixed OpenMP conflict properly**: Created wrapper script to set environment variable before imports
 - **Improved entry point**: Changed from direct import to wrapper script
