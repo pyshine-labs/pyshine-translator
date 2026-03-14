@@ -26,7 +26,7 @@ from .config_manager import ConfigManager
 from .translator import TranslationService
 from .hotkey_manager import HotkeyManager
 from .ai_translator import (AITranslator, AIProvider, get_ollama_models, 
-                            is_ollama_running, get_default_providers, OLLAMA_DEFAULT_URL)
+                            is_ollama_running, get_default_providers, OLLAMA_DEFAULT_URL, OllamaClient)
 
 
 class SettingsDialog(QDialog):
@@ -160,15 +160,25 @@ class SettingsDialog(QDialog):
         
         self.provider_url_edit = QLineEdit()
         self.provider_url_edit.setPlaceholderText("e.g., http://localhost:11434 or https://api.openai.com/v1")
+        self.provider_url_edit.textChanged.connect(self.on_url_changed)
         provider_edit_layout.addRow("API URL:", self.provider_url_edit)
+        
+        url_btn_layout = QHBoxLayout()
+        self.fetch_models_btn = QPushButton("Fetch Models")
+        self.fetch_models_btn.clicked.connect(self.fetch_models_from_url)
+        self.fetch_models_btn.setEnabled(False)
+        url_btn_layout.addWidget(self.fetch_models_btn)
+        url_btn_layout.addStretch()
+        provider_edit_layout.addRow("", url_btn_layout)
         
         self.provider_key_edit = QLineEdit()
         self.provider_key_edit.setEchoMode(QLineEdit.Password)
         provider_edit_layout.addRow("API Key:", self.provider_key_edit)
         
-        self.provider_model_edit = QLineEdit()
-        self.provider_model_edit.setPlaceholderText("e.g., gpt-4, llama2, etc.")
-        provider_edit_layout.addRow("Model:", self.provider_model_edit)
+        self.provider_model_combo = QComboBox()
+        self.provider_model_combo.setEditable(True)
+        self.provider_model_combo.setPlaceholderText("e.g., gpt-4, llama2, etc.")
+        provider_edit_layout.addRow("Model:", self.provider_model_combo)
         
         provider_edit_group.setLayout(provider_edit_layout)
         providers_layout.addWidget(provider_edit_group)
@@ -209,11 +219,14 @@ class SettingsDialog(QDialog):
         if provider_type == "ollama":
             self.provider_url_edit.setText(OLLAMA_DEFAULT_URL)
             self.provider_key_edit.setEnabled(False)
+            self.on_url_changed(self.provider_url_edit.text())
         elif provider_type == "openai":
             self.provider_url_edit.setText("https://api.openai.com/v1")
             self.provider_key_edit.setEnabled(True)
+            self.fetch_models_btn.setEnabled(False)
         else:
             self.provider_key_edit.setEnabled(True)
+            self.fetch_models_btn.setEnabled(False)
     
     def refresh_ollama_models(self):
         """Refresh the list of available Ollama models."""
@@ -311,7 +324,65 @@ class SettingsDialog(QDialog):
             self.provider_type_combo.setCurrentText(provider.get("provider_type", "openai"))
             self.provider_url_edit.setText(provider.get("api_url", ""))
             self.provider_key_edit.setText(provider.get("api_key", ""))
-            self.provider_model_edit.setText(provider.get("model", ""))
+            model = provider.get("model", "")
+            self.provider_model_combo.setCurrentText(model)
+    
+    def on_url_changed(self, text):
+        """Handle URL text change."""
+        is_ollama = self.provider_type_combo.currentText() == "ollama"
+        self.fetch_models_btn.setEnabled(is_ollama and text.strip())
+    
+    def fetch_models_from_url(self):
+        """Fetch available models from the entered Ollama URL."""
+        url = self.provider_url_edit.text().strip()
+        if not url:
+            QMessageBox.warning(self, "No URL", "Please enter an Ollama URL first.")
+            return
+        
+        self.fetch_models_btn.setEnabled(False)
+        self.fetch_models_btn.setText("Fetching...")
+        
+        try:
+            client = OllamaClient(url)
+            models = client.list_models()
+            
+            if models:
+                self.provider_model_combo.clear()
+                for model in models:
+                    name = model.get("name", "")
+                    size = model.get("size", 0)
+                    size_mb = size / (1024 * 1024) if size else 0
+                    display_name = f"{name} ({size_mb:.1f} MB)"
+                    self.provider_model_combo.addItem(display_name, name)
+                
+                if models:
+                    self.provider_model_combo.setCurrentIndex(0)
+                    QMessageBox.information(
+                        self, 
+                        "Models Found", 
+                        f"Found {len(models)} model(s) from {url}\n\nSelect a model from the dropdown."
+                    )
+                else:
+                    QMessageBox.warning(
+                        self, 
+                        "No Models", 
+                        f"Connected to {url} but no models found.\n\nPull a model with: ollama pull <model>"
+                    )
+            else:
+                QMessageBox.warning(
+                    self, 
+                    "Connection Failed", 
+                    f"Could not connect to Ollama at {url}\n\nMake sure Ollama is running and the URL is correct."
+                )
+        except Exception as e:
+            QMessageBox.critical(
+                self, 
+                "Error", 
+                f"Failed to fetch models: {str(e)}"
+            )
+        finally:
+            self.fetch_models_btn.setEnabled(True)
+            self.fetch_models_btn.setText("Fetch Models")
     
     def save_current_provider(self):
         """Save the currently edited provider details to the list."""
@@ -319,12 +390,16 @@ class SettingsDialog(QDialog):
         if current_row < 0:
             return
         
+        model = self.provider_model_combo.currentText()
+        if not model:
+            model = self.provider_model_combo.currentData()
+        
         provider = {
             "name": self.provider_name_edit.text().strip(),
             "provider_type": self.provider_type_combo.currentText(),
             "api_url": self.provider_url_edit.text().strip(),
             "api_key": self.provider_key_edit.text().strip(),
-            "model": self.provider_model_edit.text().strip(),
+            "model": model.strip(),
             "model_type": "chat"
         }
         

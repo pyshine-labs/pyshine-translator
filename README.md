@@ -193,6 +193,13 @@ Logs are written to:
 
 ## Changelog
 
+### v1.3.0 (2026)
+- **Auto-fetch Ollama models**: Added "Fetch Models" button to automatically retrieve available models from any Ollama URL
+- **Improved model selection**: Changed model field to dropdown combo box for easier selection
+- **Better Ollama integration**: Automatically enables "Fetch Models" button when Ollama URL is entered
+- **Enhanced UI**: Better feedback when fetching models and connecting to Ollama servers
+- **Cross-platform Ollama support**: Easily connect to Ollama running on any device (Windows, Mac, Linux) over WiFi
+
 ### v1.2.9 (2026)
 - **Improved hotkey detection**: Fixed hotkey combination detection to properly track modifier keys
 - **Added cooldown mechanism**: Prevents multiple rapid triggers of the same hotkey
