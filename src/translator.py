@@ -11,9 +11,9 @@ logger = logging.getLogger(__name__)
 try:
     from googletrans import Translator as GoogleTransTranslator, LANGUAGES
     GOOGLETRANS_AVAILABLE = True
-except ImportError:
+except (ImportError, AttributeError) as e:
     GOOGLETRANS_AVAILABLE = False
-    logger.warning("googletrans not installed. Install with: pip install googletrans==4.0.0rc1")
+    logger.warning("googletrans not available: %s. Google Translate backend disabled.", e)
 
 try:
     from google.cloud import translate_v2 as google_translate
