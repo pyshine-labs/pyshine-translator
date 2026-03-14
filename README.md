@@ -1,10 +1,13 @@
-# PyShine Translator v1.1.0
+# PyShine Translator
 
-A cross-platform desktop translator application that translates selected text using a global hotkey. Supports offline translation (CPU-compatible, no internet required), Google Translate, and AI providers (OpenAI, Ollama, and custom APIs).
-
+[![PyShine](https://img.shields.io/badge/PyShine.com-Official_Site-9cf)](https://pyshine.com)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/pyshine-labs/pyshine-translator)
+
+**[🏠 PyShine.com](https://pyshine.com)** • **[📦 PyPI](https://pypi.org/project/pyshine-translator/)** • **[📖 Documentation](https://github.com/pyshine-labs/pyshine-translator#readme)**
+
+A cross-platform desktop translator application that translates selected text using a global hotkey. Supports offline translation (CPU-compatible, no internet required), Google Translate, and AI providers (OpenAI, Ollama, and custom APIs).
 
 ## Features
 
@@ -184,6 +187,9 @@ Logs are written to:
 
 ## Changelog
 
+### v1.2.3 (2026)
+- Added prominent **PyShine.com branding** links in README
+
 ### v1.2.2 (2026)
 - **Fixed notification message** to show actual configured hotkey instead of hardcoded value
 
@@ -211,3 +217,13 @@ Logs are written to:
 - System tray integration
 - Configurable hotkeys
 - GUI settings panel
+
+---
+
+<p align="center">
+  <a href="https://pyshine.com">
+    <strong>🏠 PyShine.com</strong>
+  </a>
+  <br>
+  <sub>Python tutorials, AI projects, and more</sub>
+</p>
