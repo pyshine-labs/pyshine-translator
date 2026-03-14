@@ -32,6 +32,12 @@ A cross-platform desktop translator application that translates selected text us
 pip install pyshine-translator
 ```
 
+**Platform-specific notes:**
+
+- **Windows**: All dependencies install automatically
+- **macOS/Linux**: `keyboard` and `pyautogui` are Windows-only and will be skipped automatically
+- **All platforms**: `pynput` provides cross-platform keyboard/mouse support
+
 ### From Source
 
 ```bash
@@ -186,6 +192,11 @@ Logs are written to:
 - [Ollama](https://ollama.ai/) - Local LLM runtime
 
 ## Changelog
+
+### v1.2.4 (2026)
+- **Fixed dependency resolution**: Made `keyboard` and `pyautogui` Windows-only to speed up macOS/Linux installation
+- Added OS-specific classifiers (Windows, Linux, macOS) for better PyPI filtering
+- Relaxed `googletrans` version constraint from `==4.0.0rc1` to `>=4.0.0rc1` for better compatibility
 
 ### v1.2.3 (2026)
 - Added prominent **PyShine.com branding** links in README
