@@ -193,6 +193,10 @@ Logs are written to:
 
 ## Changelog
 
+### v1.2.5 (2026)
+- **Added upper bounds** to all dependencies to speed up pip dependency resolution
+- This significantly reduces installation time on macOS/Linux
+
 ### v1.2.4 (2026)
 - **Fixed dependency resolution**: Made `keyboard` and `pyautogui` Windows-only to speed up macOS/Linux installation
 - Added OS-specific classifiers (Windows, Linux, macOS) for better PyPI filtering
