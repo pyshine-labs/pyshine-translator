@@ -1,6 +1,6 @@
-# PyShine Translator v1.0.0
+# PyShine Translator v1.1.0
 
-A cross-platform desktop translator application that translates selected text using a global hotkey. Supports Google Translate and AI providers (OpenAI, Ollama, and custom APIs).
+A cross-platform desktop translator application that translates selected text using a global hotkey. Supports offline translation (CPU-compatible, no internet required), Google Translate, and AI providers (OpenAI, Ollama, and custom APIs).
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -11,8 +11,10 @@ A cross-platform desktop translator application that translates selected text us
 - **System Tray Application**: Runs in the background with a system tray icon
 - **Global Hotkey**: Press `Ctrl+Shift+T` (default) to translate selected text
 - **Multiple Translation Backends**:
+  - **Offline (Default)**: CPU-compatible local translation using Argos Translate - works without internet!
   - Google Translate (free via googletrans)
   - AI Providers: OpenAI, Ollama, and custom OpenAI-compatible APIs
+- **Offline First**: Default mode supports translations even without internet connection
 - **Ollama Integration**: Automatically discovers and lists local Ollama models
 - **Bidirectional Translation**: Auto-detects source language and translates accordingly
 - **Multi-language Support**: English, Chinese, Japanese, Korean, Spanish, and more
@@ -80,11 +82,26 @@ else:
 
 | Setting | Description | Default |
 |---------|-------------|---------|
-| Backend | Google Translate or AI Provider | Google Translate |
+| Backend | Offline (Local), Google Translate, or AI Provider | Offline (Local) |
 | Source Language | Source language for bidirectional translation | English |
 | Target Language | Target language for translation | Chinese Simplified |
 | Bidirectional | Auto-detect and swap translation direction | Enabled |
 | Hotkey | Global hotkey combination | Ctrl+Shift+T |
+
+### Offline Translation
+
+The default backend uses **Argos Translate** for offline translation:
+- Works without internet connection
+- CPU-compatible (no GPU required)
+- First run will download language models automatically
+- Supports many language pairs
+
+To install additional language models:
+```python
+from argostranslate import package
+package.update_package_index()
+package.install_from_path(package.get_available_packages()[0].download())
+```
 
 ### AI Provider Settings
 
@@ -158,6 +175,7 @@ Logs are written to:
 
 ## Acknowledgments
 
+- [argostranslate](https://pypi.org/project/argostranslate/) - Offline translation library
 - [googletrans](https://pypi.org/project/googletrans/) - Free Google Translate API
 - [PySide6](https://pypi.org/project/PySide6/) - Qt for Python GUI
 - [keyboard](https://pypi.org/project/keyboard/) - Global hotkey support
@@ -165,6 +183,12 @@ Logs are written to:
 - [Ollama](https://ollama.ai/) - Local LLM runtime
 
 ## Changelog
+
+### v1.1.0 (2026)
+- Added **offline translation** backend using Argos Translate
+- CPU-compatible local translation - works without internet!
+- Set offline as default backend for immediate use
+- Supports multiple language pairs
 
 ### v1.0.0 (2024)
 - Initial release

@@ -28,7 +28,7 @@ except ImportError:
     LANGDETECT_AVAILABLE = False
 
 try:
-    from .ai_translator import AITranslator, AIProvider, get_ollama_models, is_ollama_running
+    from .ai_translator import AITranslator, AIProvider, get_ollama_models, is_ollama_running, get_offline_translator, is_offline_available
     AI_TRANSLATOR_AVAILABLE = True
 except ImportError:
     AI_TRANSLATOR_AVAILABLE = False
@@ -192,7 +192,47 @@ class TranslationService:
         
         self._rate_limit()
         
-        backend = self.config.get("translation_backend", "google")
+        backend = self.config.get("translation_backend", "offline")
+        
+        if backend == "offline":
+            if AI_TRANSLATOR_AVAILABLE and is_offline_available():
+                offline_translator = get_offline_translator()
+                try:
+                    result_text = offline_translator.translate(text, source_language, final_target)
+                    if result_text:
+                        logger.info("Offline translated %d chars to %s", len(text), final_target)
+                        return TranslationResult(
+                            text=result_text,
+                            source_language=source_language,
+                            target_language=final_target,
+                            confidence=None,
+                            backend="Offline (Argos)"
+                        )
+                    else:
+                        return TranslationResult(
+                            text="",
+                            source_language=source_language,
+                            target_language=final_target,
+                            error="Offline translation not available for this language pair. Install language models.",
+                            backend="Offline"
+                        )
+                except Exception as e:
+                    logger.exception("Offline translation failed: %s", e)
+                    return TranslationResult(
+                        text="",
+                        source_language=source_language,
+                        target_language=final_target,
+                        error=f"Offline translation error: {str(e)}",
+                        backend="Offline"
+                    )
+            else:
+                return TranslationResult(
+                    text="",
+                    source_language=source_language,
+                    target_language=final_target,
+                    error="Offline translation not available. Install argostranslate: pip install argostranslate",
+                    backend="Offline"
+                )
         
         if backend != "google":
             ai_translator = self._get_ai_translator()

@@ -14,17 +14,19 @@ class ConfigManager:
     """Manage application configuration."""
     
     DEFAULT_CONFIG = {
-        "api_key": "",  # empty for googletrans
-        "target_language": "zh-CN",  # Chinese Simplified
-        "source_language": "en",  # source language for bidirectional translation
-        "bidirectional": True,  # enable automatic direction swapping
+        "api_key": "",
+        "target_language": "zh-CN",
+        "source_language": "en",
+        "bidirectional": True,
         "hotkey": "ctrl+shift+t",
         "enabled": True,
         "log_level": "INFO",
-        "use_official_api": False,  # if True, use google-cloud-translate with api_key
-        "translation_backend": "google",  # google, openai, ollama, custom
-        "ai_providers": [],  # list of custom AI providers
-        "current_ai_provider": None,  # currently selected AI provider index
+        "use_official_api": False,
+        "translation_backend": "offline",
+        "ai_providers": [],
+        "current_ai_provider": None,
+        "offline_languages": [],
+        "auto_install_offline": True,
     }
     
     def __init__(self, config_dir: str = None, config_filename: str = "config.json"):

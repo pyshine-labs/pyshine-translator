@@ -5,3 +5,4 @@ keyboard>=0.13.5
 pyautogui>=0.9.54
 pynput>=1.7.6
 requests>=2.31.0
+argostranslate>=1.9.0

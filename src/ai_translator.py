@@ -1,5 +1,5 @@
 """
-AI-based translation service supporting OpenAI, Ollama, and custom API providers.
+AI-based translation service supporting OpenAI, Ollama, custom API providers, and offline translation.
 """
 import json
 import logging
@@ -11,6 +11,14 @@ logger = logging.getLogger(__name__)
 
 OLLAMA_DEFAULT_URL = "http://localhost:11434"
 OPENAI_DEFAULT_URL = "https://api.openai.com/v1"
+
+OFFLINE_TRANSLATOR_AVAILABLE = False
+try:
+    import argostranslate.translate
+    import argostranslate.package
+    OFFLINE_TRANSLATOR_AVAILABLE = True
+except ImportError:
+    logger.debug("argostranslate not installed. Install with: pip install argostranslate")
 
 
 @dataclass
@@ -183,6 +191,229 @@ class OpenAIClient:
             return []
 
 
+class OfflineTranslator:
+    """Offline translator using argostranslate (CPU-compatible, no internet required)."""
+    
+    LANGUAGE_MAP = {
+        "en": "English",
+        "zh": "Chinese",
+        "zh-CN": "Chinese",
+        "zh-TW": "Chinese Traditional",
+        "ja": "Japanese",
+        "ko": "Korean",
+        "es": "Spanish",
+        "fr": "French",
+        "de": "German",
+        "ru": "Russian",
+        "pt": "Portuguese",
+        "it": "Italian",
+        "ar": "Arabic",
+        "hi": "Hindi",
+        "th": "Thai",
+        "vi": "Vietnamese",
+        "nl": "Dutch",
+        "pl": "Polish",
+        "tr": "Turkish",
+        "id": "Indonesian",
+        "ms": "Malay",
+        "cs": "Czech",
+        "sv": "Swedish",
+        "da": "Danish",
+        "fi": "Finnish",
+        "hu": "Hungarian",
+        "ro": "Romanian",
+        "uk": "Ukrainian",
+        "he": "Hebrew",
+        "bn": "Bengali",
+        "ta": "Tamil",
+        "te": "Telugu",
+        "ml": "Malayalam"
+    }
+    
+    _installed_languages = None
+    _translation_cache = {}
+    
+    def __init__(self):
+        self._ensure_packages_updated()
+    
+    def _ensure_packages_updated(self):
+        """Ensure argostranslate package index is updated."""
+        if OFFLINE_TRANSLATOR_AVAILABLE:
+            try:
+                argostranslate.package.update_package_index()
+            except Exception as e:
+                logger.debug("Could not update argostranslate package index: %s", e)
+    
+    def _normalize_lang_code(self, lang_code: str) -> str:
+        """Normalize language code for argostranslate."""
+        lang_code = lang_code.lower()
+        if lang_code.startswith("zh"):
+            return "zh"
+        return lang_code
+    
+    def get_installed_languages(self) -> List[Dict[str, Any]]:
+        """Get list of installed language pairs for offline translation."""
+        if not OFFLINE_TRANSLATOR_AVAILABLE:
+            return []
+        
+        try:
+            if self._installed_languages is None:
+                self._installed_languages = argostranslate.translate.get_installed_languages()
+            
+            languages = []
+            seen_pairs = set()
+            
+            for from_lang in self._installed_languages:
+                for to_lang in from_lang.translations:
+                    pair_key = f"{from_lang.code}->{to_lang.code}"
+                    if pair_key not in seen_pairs:
+                        seen_pairs.add(pair_key)
+                        languages.append({
+                            "from": from_lang.code,
+                            "from_name": from_lang.name,
+                            "to": to_lang.code,
+                            "to_name": to_lang.name,
+                            "pair": f"{from_lang.name} → {to_lang.name}"
+                        })
+            
+            logger.info("Found %d installed offline translation pairs", len(languages))
+            return languages
+        except Exception as e:
+            logger.error("Failed to get installed languages: %s", e)
+            return []
+    
+    def get_available_packages(self) -> List[Dict[str, Any]]:
+        """Get list of available packages that can be installed."""
+        if not OFFLINE_TRANSLATOR_AVAILABLE:
+            return []
+        
+        try:
+            available_packages = argostranslate.package.get_available_packages()
+            installed_codes = set()
+            
+            for lang in argostranslate.translate.get_installed_languages():
+                installed_codes.add(lang.code)
+            
+            packages = []
+            for pkg in available_packages:
+                packages.append({
+                    "from": pkg.from_code,
+                    "to": pkg.to_code,
+                    "from_name": pkg.from_name,
+                    "to_name": pkg.to_name,
+                    "installed": pkg.from_code in installed_codes and pkg.to_code in installed_codes
+                })
+            
+            return packages
+        except Exception as e:
+            logger.error("Failed to get available packages: %s", e)
+            return []
+    
+    def install_language_pair(self, from_code: str, to_code: str) -> bool:
+        """Install a language pair for offline translation."""
+        if not OFFLINE_TRANSLATOR_AVAILABLE:
+            logger.error("argostranslate not available")
+            return False
+        
+        try:
+            available_packages = argostranslate.package.get_available_packages()
+            
+            package_to_install = None
+            for pkg in available_packages:
+                if pkg.from_code == from_code and pkg.to_code == to_code:
+                    package_to_install = pkg
+                    break
+            
+            if package_to_install:
+                argostranslate.package.install_from_path(package_to_install.download())
+                self._installed_languages = None
+                logger.info("Installed offline translation: %s -> %s", from_code, to_code)
+                return True
+            else:
+                logger.warning("Package not found: %s -> %s", from_code, to_code)
+                return False
+        except Exception as e:
+            logger.error("Failed to install language pair: %s", e)
+            return False
+    
+    def is_available(self) -> bool:
+        """Check if offline translation is available."""
+        return OFFLINE_TRANSLATOR_AVAILABLE
+    
+    def can_translate(self, source_lang: str, target_lang: str) -> bool:
+        """Check if a specific translation pair is available."""
+        if not OFFLINE_TRANSLATOR_AVAILABLE:
+            return False
+        
+        try:
+            source = self._normalize_lang_code(source_lang)
+            target = self._normalize_lang_code(target_lang)
+            
+            if self._installed_languages is None:
+                self._installed_languages = argostranslate.translate.get_installed_languages()
+            
+            for from_lang in self._installed_languages:
+                if from_lang.code == source:
+                    for to_lang in from_lang.translations:
+                        if to_lang.code == target:
+                            return True
+            return False
+        except Exception as e:
+            logger.error("Error checking translation availability: %s", e)
+            return False
+    
+    def translate(self, text: str, source_lang: str, target_lang: str) -> Optional[str]:
+        """Translate text using offline argostranslate."""
+        if not OFFLINE_TRANSLATOR_AVAILABLE:
+            logger.error("argostranslate not installed")
+            return None
+        
+        try:
+            source = self._normalize_lang_code(source_lang)
+            target = self._normalize_lang_code(target_lang)
+            
+            cache_key = f"{source}->{target}:{text}"
+            if cache_key in self._translation_cache:
+                return self._translation_cache[cache_key]
+            
+            if self._installed_languages is None:
+                self._installed_languages = argostranslate.translate.get_installed_languages()
+            
+            from_language = None
+            to_language = None
+            
+            for lang in self._installed_languages:
+                if lang.code == source:
+                    from_language = lang
+                if lang.code == target:
+                    to_language = lang
+            
+            if from_language is None:
+                logger.error("Source language not installed: %s", source)
+                return None
+            
+            if to_language is None:
+                logger.error("Target language not installed: %s", target)
+                return None
+            
+            translation = from_language.get_translation(to_language)
+            if translation is None:
+                logger.error("No translation found for %s -> %s", source, target)
+                return None
+            
+            result = translation.translate(text)
+            
+            if len(self._translation_cache) < 1000:
+                self._translation_cache[cache_key] = result
+            
+            logger.info("Offline translated %d chars from %s to %s", len(text), source, target)
+            return result
+            
+        except Exception as e:
+            logger.error("Offline translation failed: %s", e)
+            return None
+
+
 class AITranslator:
     """AI-based translator supporting multiple providers."""
     
@@ -305,3 +536,36 @@ def get_default_providers() -> List[Dict[str, Any]]:
             "model_type": "chat"
         }
     ]
+
+
+_offline_translator_instance = None
+
+def get_offline_translator() -> OfflineTranslator:
+    """Get or create the global offline translator instance."""
+    global _offline_translator_instance
+    if _offline_translator_instance is None:
+        _offline_translator_instance = OfflineTranslator()
+    return _offline_translator_instance
+
+
+def is_offline_available() -> bool:
+    """Check if offline translation is available."""
+    return OFFLINE_TRANSLATOR_AVAILABLE
+
+
+def get_offline_languages() -> List[Dict[str, Any]]:
+    """Get list of installed offline translation language pairs."""
+    translator = get_offline_translator()
+    return translator.get_installed_languages()
+
+
+def get_offline_available_packages() -> List[Dict[str, Any]]:
+    """Get list of available offline translation packages."""
+    translator = get_offline_translator()
+    return translator.get_available_packages()
+
+
+def install_offline_language(from_code: str, to_code: str) -> bool:
+    """Install an offline translation language pair."""
+    translator = get_offline_translator()
+    return translator.install_language_pair(from_code, to_code)

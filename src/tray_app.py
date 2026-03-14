@@ -77,7 +77,7 @@ class SettingsDialog(QDialog):
         backend_group = QGroupBox("Translation Backend")
         backend_layout = QFormLayout()
         self.backend_combo = QComboBox()
-        self.backend_combo.addItems(["Google Translate", "AI Provider"])
+        self.backend_combo.addItems(["Offline (Local)", "Google Translate", "AI Provider"])
         self.backend_combo.currentIndexChanged.connect(self.on_backend_changed)
         backend_layout.addRow("Backend:", self.backend_combo)
         self.ai_provider_combo = QComboBox()
@@ -202,7 +202,7 @@ class SettingsDialog(QDialog):
     
     def on_backend_changed(self, index):
         """Handle backend selection change."""
-        self.ai_provider_combo.setEnabled(index == 1)
+        self.ai_provider_combo.setEnabled(index == 2)
     
     def on_provider_type_changed(self, provider_type):
         """Handle provider type change."""
@@ -353,8 +353,9 @@ class SettingsDialog(QDialog):
         self.hotkey_edit.setText(config.get("hotkey", "ctrl+shift+t"))
         self.enabled_check.setChecked(config.get("enabled", True))
         
-        backend = config.get("translation_backend", "google")
-        self.backend_combo.setCurrentIndex(0 if backend == "google" else 1)
+        backend = config.get("translation_backend", "offline")
+        backend_map = {"offline": 0, "google": 1, "ai": 2}
+        self.backend_combo.setCurrentIndex(backend_map.get(backend, 0))
         
         providers = config.get("ai_providers", [])
         self.providers_list.clear()
@@ -396,7 +397,8 @@ class SettingsDialog(QDialog):
         config["enabled"] = self.enabled_check.isChecked()
         
         backend_idx = self.backend_combo.currentIndex()
-        config["translation_backend"] = "google" if backend_idx == 0 else "ai"
+        backend_codes = ["offline", "google", "ai"]
+        config["translation_backend"] = backend_codes[backend_idx]
         
         providers = []
         for i in range(self.providers_list.count()):
@@ -404,13 +406,13 @@ class SettingsDialog(QDialog):
             providers.append(item.data(Qt.UserRole))
         config["ai_providers"] = providers
         
-        config["current_ai_provider"] = self.ai_provider_combo.currentIndex() if backend_idx == 1 else None
+        config["current_ai_provider"] = self.ai_provider_combo.currentIndex() if backend_idx == 2 else None
         
         if not config["hotkey"]:
             QMessageBox.warning(self, "Invalid hotkey", "Hotkey cannot be empty")
             return
         
-        if backend_idx == 1 and len(providers) == 0:
+        if backend_idx == 2 and len(providers) == 0:
             QMessageBox.warning(self, "No AI Provider", "Please add at least one AI provider in the AI Providers tab.")
             return
         
