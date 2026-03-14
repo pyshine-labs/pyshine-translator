@@ -193,6 +193,11 @@ Logs are written to:
 
 ## Changelog
 
+### v1.3.5 (2026)
+- **Fixed OpenMP conflict properly**: Created wrapper script to set environment variable before imports
+- **Improved entry point**: Changed from direct import to wrapper script
+- **No more OpenMP warnings**: Environment variable set before any library imports
+
 ### v1.3.4 (2026)
 - **Fixed OpenMP conflict on Windows**: Resolved libiomp5md.dll initialization error
 - **Added environment variable fix**: Automatically sets KMP_DUPLICATE_LIB_OK=TRUE
