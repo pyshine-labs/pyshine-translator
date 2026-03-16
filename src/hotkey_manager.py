@@ -26,6 +26,80 @@ except ImportError:
     PYPERCLIP_AVAILABLE = False
     logger.warning("pyperclip not installed. Install with: pip install pyperclip")
 
+try:
+    import pyautogui
+    PYAUTOGUI_AVAILABLE = True
+except ImportError:
+    PYAUTOGUI_AVAILABLE = False
+    logger.warning("pyautogui not installed. Install with: pip install pyautogui")
+
+# Windows API for window management and key simulation
+if platform.system() == 'Windows':
+    try:
+        import ctypes
+        import ctypes.wintypes
+        user32 = ctypes.windll.user32
+        kernel32 = ctypes.windll.kernel32
+        
+        # Windows SendInput structures for reliable key simulation
+        INPUT_KEYBOARD = 1
+        KEYEVENTF_KEYUP = 0x0002
+        KEYEVENTF_EXTENDEDKEY = 0x0001
+        
+        VK_CONTROL = 0x11
+        VK_SHIFT = 0x10
+        VK_MENU = 0x12  # Alt
+        VK_C = 0x43
+        VK_V = 0x56
+        VK_A = 0x41
+        
+        class KEYBDINPUT(ctypes.Structure):
+            _fields_ = [
+                ("wVk", ctypes.wintypes.WORD),
+                ("wScan", ctypes.wintypes.WORD),
+                ("dwFlags", ctypes.wintypes.DWORD),
+                ("time", ctypes.wintypes.DWORD),
+                ("dwExtraInfo", ctypes.POINTER(ctypes.wintypes.ULONG)),
+            ]
+        
+        class MOUSEINPUT(ctypes.Structure):
+            _fields_ = [
+                ("dx", ctypes.wintypes.LONG),
+                ("dy", ctypes.wintypes.LONG),
+                ("mouseData", ctypes.wintypes.DWORD),
+                ("dwFlags", ctypes.wintypes.DWORD),
+                ("time", ctypes.wintypes.DWORD),
+                ("dwExtraInfo", ctypes.POINTER(ctypes.wintypes.ULONG)),
+            ]
+        
+        class HARDWAREINPUT(ctypes.Structure):
+            _fields_ = [
+                ("uMsg", ctypes.wintypes.DWORD),
+                ("wParamL", ctypes.wintypes.WORD),
+                ("wParamH", ctypes.wintypes.WORD),
+            ]
+        
+        class INPUT_UNION(ctypes.Union):
+            _fields_ = [
+                ("ki", KEYBDINPUT),
+                ("mi", MOUSEINPUT),
+                ("hi", HARDWAREINPUT),
+            ]
+        
+        class INPUT(ctypes.Structure):
+            _anonymous_ = ("_input",)
+            _fields_ = [
+                ("type", ctypes.wintypes.DWORD),
+                ("_input", INPUT_UNION),
+            ]
+        
+        WINDOWS_API_AVAILABLE = True
+    except Exception as e:
+        WINDOWS_API_AVAILABLE = False
+        logger.warning("Windows API not available: %s", e)
+else:
+    WINDOWS_API_AVAILABLE = False
+
 class HotkeyManager:
     """
     Manages global hotkey registration and translation triggered by hotkey.
@@ -43,6 +117,122 @@ class HotkeyManager:
         self._pressed_keys = set()
         self._last_trigger_time = 0
         self._trigger_cooldown = 0.5
+        self._translation_lock = threading.Lock()
+        self._is_translating = False
+        self._simulating_keys = False
+        self._source_window_handle = None
+        self._source_window_title = None
+    
+    def _win_send_key(self, vk_code, key_down=True):
+        """Send a key event using Windows SendInput API."""
+        if not WINDOWS_API_AVAILABLE:
+            return False
+        
+        flags = 0 if key_down else KEYEVENTF_KEYUP
+        
+        inp = INPUT()
+        inp.type = INPUT_KEYBOARD
+        inp._input.ki.wVk = vk_code
+        inp._input.ki.wScan = 0
+        inp._input.ki.dwFlags = flags
+        inp._input.ki.time = 0
+        inp._input.ki.dwExtraInfo = None
+        
+        user32.SendInput(1, ctypes.byref(inp), ctypes.sizeof(INPUT))
+        return True
+    
+    def _win_send_hotkey(self, vk_modifier, vk_key):
+        """Send a hotkey combination using Windows SendInput API."""
+        if not WINDOWS_API_AVAILABLE:
+            return False
+        
+        self._simulating_keys = True
+        try:
+            self._win_send_key(vk_modifier, key_down=True)
+            time.sleep(0.05)
+            self._win_send_key(vk_key, key_down=True)
+            time.sleep(0.05)
+            self._win_send_key(vk_key, key_down=False)
+            time.sleep(0.05)
+            self._win_send_key(vk_modifier, key_down=False)
+            time.sleep(0.1)
+            return True
+        finally:
+            self._simulating_keys = False
+            self._pressed_keys.clear()
+    
+    def _get_foreground_window(self):
+        """Get the current foreground window handle and title."""
+        if not WINDOWS_API_AVAILABLE:
+            return None, None
+        
+        try:
+            hwnd = user32.GetForegroundWindow()
+            length = user32.GetWindowTextLengthW(hwnd)
+            buff = ctypes.create_unicode_buffer(length + 1)
+            user32.GetWindowTextW(hwnd, buff, length + 1)
+            title = buff.value if buff.value else ""
+            return hwnd, title
+        except Exception as e:
+            logger.error("Failed to get foreground window: %s", e)
+            return None, None
+    
+    def _set_foreground_window(self, hwnd):
+        """Set the foreground window by handle."""
+        if not WINDOWS_API_AVAILABLE or not hwnd:
+            return False
+        
+        try:
+            # Windows has restrictions on SetForegroundWindow
+            # We need to use a workaround to force focus
+            # First, try to attach to the foreground window's thread
+            foreground_thread = user32.GetWindowThreadProcessId(hwnd, None)
+            current_thread = kernel32.GetCurrentThreadId()
+            current_foreground = user32.GetForegroundWindow()
+            current_foreground_thread = user32.GetWindowThreadProcessId(current_foreground, None)
+            
+            # Attach threads to allow focus change
+            user32.AttachThreadInput(current_foreground_thread, current_thread, True)
+            user32.AttachThreadInput(current_thread, foreground_thread, True)
+            
+            # Show the window first
+            user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+            
+            # Now set foreground
+            result = user32.SetForegroundWindow(hwnd)
+            
+            # Detach threads
+            user32.AttachThreadInput(current_thread, foreground_thread, False)
+            user32.AttachThreadInput(current_foreground_thread, current_thread, False)
+            
+            if result:
+                logger.debug("Successfully set foreground window using thread attach")
+                return True
+            else:
+                # Fallback: just show the window
+                user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+                user32.BringWindowToTop(hwnd)
+                logger.debug("Used fallback method to bring window to top")
+                return True
+        except Exception as e:
+            logger.error("Failed to set foreground window: %s", e)
+            # Last resort fallback
+            try:
+                user32.ShowWindow(hwnd, 9)
+                user32.BringWindowToTop(hwnd)
+            except:
+                pass
+            return False
+    
+    def _is_window_valid(self, hwnd):
+        """Check if a window handle is still valid."""
+        if not WINDOWS_API_AVAILABLE or not hwnd:
+            return False
+        
+        try:
+            return user32.IsWindow(hwnd) != 0
+        except Exception:
+            return False
         
     def start(self):
         """Start listening for hotkey."""
@@ -141,6 +331,8 @@ class HotkeyManager:
     
     def _on_press(self, key):
         """Handle key press events."""
+        if self._simulating_keys:
+            return
         try:
             key_name = self._get_key_name(key)
             if key_name:
@@ -151,13 +343,12 @@ class HotkeyManager:
     
     def _on_release(self, key):
         """Handle key release events and check for hotkey."""
+        if self._simulating_keys:
+            return
         try:
             key_name = self._get_key_name(key)
             if key_name:
-                self._pressed_keys.discard(key_name)
-                logger.debug("Key released: %s, currently pressed: %s", key_name, self._pressed_keys)
-                
-                # Check if this key release completes the hotkey combination
+                # Check for hotkey BEFORE removing the key from pressed set
                 if self._check_hotkey():
                     current_time = time.time()
                     if current_time - self._last_trigger_time >= self._trigger_cooldown:
@@ -165,6 +356,8 @@ class HotkeyManager:
                         self._on_hotkey_triggered()
                     else:
                         logger.debug("Hotkey triggered too recently, ignoring (cooldown: %.2fs)", self._trigger_cooldown)
+                self._pressed_keys.discard(key_name)
+                logger.debug("Key released: %s, currently pressed: %s", key_name, self._pressed_keys)
         except Exception as e:
             logger.debug("Error tracking key release: %s", e)
     
@@ -172,10 +365,24 @@ class HotkeyManager:
         """Get a normalized key name for comparison."""
         try:
             if hasattr(key, 'name'):
-                return key.name
+                name = key.name
             elif hasattr(key, 'char'):
-                return key.char
-            return str(key)
+                name = key.char
+            else:
+                name = str(key)
+            
+            # Normalize modifier key names
+            name_lower = name.lower() if name else ''
+            if name_lower in ('ctrl_l', 'ctrl_r', 'control_l', 'control_r'):
+                name = 'ctrl'
+            elif name_lower in ('shift_l', 'shift_r'):
+                name = 'shift'
+            elif name_lower in ('alt_l', 'alt_r'):
+                name = 'alt'
+            elif name_lower in ('cmd_l', 'cmd_r'):
+                name = 'cmd'
+            
+            return name
         except Exception:
             return None
     
@@ -191,6 +398,9 @@ class HotkeyManager:
                 if key_name:
                     required_keys.add(key_name)
             
+            logger.debug("Hotkey check: pressed=%s, required=%s, match=%s", 
+                        self._pressed_keys, required_keys, self._pressed_keys == required_keys)
+            
             if self._pressed_keys == required_keys:
                 logger.info("Hotkey combination detected: %s", self._hotkey_str)
                 return True
@@ -202,9 +412,32 @@ class HotkeyManager:
     def _on_hotkey_triggered(self):
         """Callback when hotkey is pressed."""
         logger.info("Hotkey triggered (thread %s)", threading.current_thread().name)
+        
+        if self._is_translating:
+            logger.debug("Translation already in progress, skipping")
+            return
+        
         if not self.config.get("enabled", True):
             logger.debug("Translation disabled, ignoring hotkey")
             return
+        
+        with self._translation_lock:
+            if self._is_translating:
+                logger.debug("Translation already in progress, skipping")
+                return
+            self._is_translating = True
+        
+        try:
+            self._do_translation()
+        finally:
+            with self._translation_lock:
+                self._is_translating = False
+    
+    def _do_translation(self):
+        """Perform the actual translation."""
+        # Step 0: Capture source window
+        self._source_window_handle, self._source_window_title = self._get_foreground_window()
+        logger.info("Source window: handle=%s, title='%s'", self._source_window_handle, self._source_window_title)
         
         # Step 1: Copy selected text (simulate Ctrl+C)
         original_clipboard = None
@@ -212,20 +445,21 @@ class HotkeyManager:
             # Backup clipboard content
             if PYPERCLIP_AVAILABLE:
                 original_clipboard = pyperclip.paste()
+                logger.debug("Original clipboard: %r", original_clipboard[:100] if original_clipboard else '')
             
             # Simulate Ctrl+C with retries
             selected_text = None
             max_attempts = 5
-            base_delay = 0.4
+            base_delay = 0.6
             
             for attempt in range(max_attempts):
                 logger.debug("Copy attempt %d of %d (thread %s)", attempt + 1, max_attempts, threading.current_thread().name)
                 
-                # Use pynput to simulate Ctrl+C
+                # Use pyautogui to simulate Ctrl+C
                 self._simulate_copy()
                 
                 # Wait for clipboard to update
-                delay = base_delay + (attempt * 0.1)
+                delay = base_delay + (attempt * 0.2)
                 time.sleep(delay)
                 
                 # Get clipboard text
@@ -236,12 +470,13 @@ class HotkeyManager:
                 
                 logger.debug("Clipboard after attempt %d: %r", attempt + 1, selected_text[:200] if selected_text else '')
                 
-                if selected_text and not selected_text.isspace():
+                # Check if clipboard has content
+                if selected_text and not selected_text.isspace() and len(selected_text) > 0:
                     logger.debug("Copy succeeded on attempt %d", attempt + 1)
                     break
                 else:
                     logger.debug("Clipboard empty after attempt %d, retrying...", attempt + 1)
-                    time.sleep(0.2)
+                    time.sleep(0.3)
             
             if not selected_text or selected_text.isspace():
                 logger.warning("No text selected or clipboard empty after %d attempts", max_attempts)
@@ -273,13 +508,20 @@ class HotkeyManager:
             # Small delay to ensure clipboard updated
             time.sleep(0.1)
             
-            # Step 4: Paste (simulate Ctrl+V)
+            # Step 4: Restore focus to source window and paste
+            if self._is_window_valid(self._source_window_handle):
+                logger.info("Restoring focus to source window: %s", self._source_window_title)
+                self._set_foreground_window(self._source_window_handle)
+                time.sleep(0.3)  # Wait for window to be focused
+            
+            # Step 5: Paste (simulate Ctrl+V)
             self._simulate_paste()
             
-            logger.info("Translation pasted successfully")
+            logger.info("Translation pasted successfully to %s", self._source_window_title)
             if self.notification_callback:
                 backend_info = f" via {result.backend}" if result.backend else ""
-                self.notification_callback("Translation Completed", f"Translated {len(selected_text)} characters{backend_info}", is_error=False)
+                window_info = f" to {self._source_window_title}" if self._source_window_title else ""
+                self.notification_callback("Translation Completed", f"Translated {len(selected_text)} characters{backend_info}{window_info}", is_error=False)
             
         except Exception as e:
             logger.exception("Error during hotkey translation: %s", e)
@@ -287,42 +529,97 @@ class HotkeyManager:
                 self.notification_callback("Translation Error", f"An error occurred: {e}", is_error=True)
     
     def _simulate_copy(self):
-        """Simulate Ctrl+C using pynput."""
+        """Simulate Ctrl+C using Windows SendInput API for reliability."""
         try:
-            keyboard_controller = keyboard.Controller()
-            
-            # On macOS, use Cmd+C, on Windows/Linux use Ctrl+C
-            if platform.system() == 'Darwin':
-                keyboard_controller.press(keyboard.Key.cmd)
-                keyboard_controller.press('c')
-                keyboard_controller.release('c')
-                keyboard_controller.release(keyboard.Key.cmd)
+            if WINDOWS_API_AVAILABLE:
+                self._win_send_hotkey(VK_CONTROL, VK_C)
+                logger.debug("Used Windows SendInput for Ctrl+C simulation")
+            elif PYAUTOGUI_AVAILABLE:
+                self._simulating_keys = True
+                pyautogui.keyDown('ctrl')
+                time.sleep(0.1)
+                pyautogui.keyDown('c')
+                time.sleep(0.05)
+                pyautogui.keyUp('c')
+                time.sleep(0.1)
+                pyautogui.keyUp('ctrl')
+                self._simulating_keys = False
+                self._pressed_keys.clear()
+                logger.debug("Used pyautogui for Ctrl+C simulation")
             else:
-                keyboard_controller.press(keyboard.Key.ctrl)
-                keyboard_controller.press('c')
-                keyboard_controller.release('c')
-                keyboard_controller.release(keyboard.Key.ctrl)
+                self._simulating_keys = True
+                keyboard_controller = keyboard.Controller()
+                if platform.system() == 'Darwin':
+                    keyboard_controller.press(keyboard.Key.cmd)
+                    time.sleep(0.1)
+                    keyboard_controller.press('c')
+                    time.sleep(0.05)
+                    keyboard_controller.release('c')
+                    time.sleep(0.1)
+                    keyboard_controller.release(keyboard.Key.cmd)
+                else:
+                    keyboard_controller.press(keyboard.Key.ctrl)
+                    time.sleep(0.1)
+                    keyboard_controller.press('c')
+                    time.sleep(0.05)
+                    keyboard_controller.release('c')
+                    time.sleep(0.1)
+                    keyboard_controller.release(keyboard.Key.ctrl)
+                self._simulating_keys = False
+                self._pressed_keys.clear()
+                logger.debug("Used pynput for Ctrl+C simulation")
+            time.sleep(0.3)
         except Exception as e:
             logger.error("Failed to simulate copy: %s", e)
+            self._simulating_keys = False
+            self._pressed_keys.clear()
     
     def _simulate_paste(self):
-        """Simulate Ctrl+V using pynput."""
+        """Simulate Ctrl+V using the most reliable method available."""
         try:
-            keyboard_controller = keyboard.Controller()
-            
-            # On macOS, use Cmd+V, on Windows/Linux use Ctrl+V
-            if platform.system() == 'Darwin':
-                keyboard_controller.press(keyboard.Key.cmd)
-                keyboard_controller.press('v')
-                keyboard_controller.release('v')
-                keyboard_controller.release(keyboard.Key.cmd)
+            if PYAUTOGUI_AVAILABLE:
+                self._simulating_keys = True
+                pyautogui.keyDown('ctrl')
+                time.sleep(0.15)
+                pyautogui.keyDown('v')
+                time.sleep(0.1)
+                pyautogui.keyUp('v')
+                time.sleep(0.15)
+                pyautogui.keyUp('ctrl')
+                time.sleep(0.2)
+                self._simulating_keys = False
+                self._pressed_keys.clear()
+                logger.debug("Used pyautogui for Ctrl+V simulation")
+            elif WINDOWS_API_AVAILABLE:
+                self._win_send_hotkey(VK_CONTROL, VK_V)
+                logger.debug("Used Windows SendInput for Ctrl+V simulation")
             else:
-                keyboard_controller.press(keyboard.Key.ctrl)
-                keyboard_controller.press('v')
-                keyboard_controller.release('v')
-                keyboard_controller.release(keyboard.Key.ctrl)
+                self._simulating_keys = True
+                keyboard_controller = keyboard.Controller()
+                if platform.system() == 'Darwin':
+                    keyboard_controller.press(keyboard.Key.cmd)
+                    time.sleep(0.1)
+                    keyboard_controller.press('v')
+                    time.sleep(0.05)
+                    keyboard_controller.release('v')
+                    time.sleep(0.1)
+                    keyboard_controller.release(keyboard.Key.cmd)
+                else:
+                    keyboard_controller.press(keyboard.Key.ctrl)
+                    time.sleep(0.1)
+                    keyboard_controller.press('v')
+                    time.sleep(0.05)
+                    keyboard_controller.release('v')
+                    time.sleep(0.1)
+                    keyboard_controller.release(keyboard.Key.ctrl)
+                self._simulating_keys = False
+                self._pressed_keys.clear()
+                logger.debug("Used pynput for Ctrl+V simulation")
+            time.sleep(0.3)
         except Exception as e:
             logger.error("Failed to simulate paste: %s", e)
+            self._simulating_keys = False
+            self._pressed_keys.clear()
     
     def _get_clipboard_text_fallback(self):
         """Fallback method to get clipboard text using tkinter."""

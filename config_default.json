@@ -1,0 +1,21 @@
+{
+    "api_key": "",
+    "use_official_api": false,
+    "source_language": "en",
+    "target_language": "zh-CN",
+    "bidirectional": true,
+    "enabled": true,
+    "hotkey": "ctrl+shift+space",
+    "translation_backend": "offline",
+    "ai_providers": [
+        {
+            "api_key": "",
+            "api_url": "http://localhost:11434",
+            "model": "llama3.1:8b",
+            "model_type": "chat",
+            "name": "Ollama: llama3.1:8b",
+            "provider_type": "ollama"
+        }
+    ],
+    "current_ai_provider": 0
+}

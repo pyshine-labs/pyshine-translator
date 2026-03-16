@@ -3,6 +3,7 @@ Translation service using googletrans (free), Google Cloud Translation API, or A
 """
 import logging
 import time
+import threading
 from typing import Optional, Tuple
 from dataclasses import dataclass
 
@@ -28,7 +29,7 @@ except ImportError:
     LANGDETECT_AVAILABLE = False
 
 try:
-    from .ai_translator import AITranslator, AIProvider, get_ollama_models, is_ollama_running, get_offline_translator, is_offline_available
+    from .ai_translator import AITranslator, AIProvider, get_ollama_models, is_ollama_running, get_offline_translator, is_offline_available, install_offline_translator, OFFLINE_BACKEND
     AI_TRANSLATOR_AVAILABLE = True
 except ImportError:
     AI_TRANSLATOR_AVAILABLE = False
@@ -60,6 +61,7 @@ class TranslationService:
         self._ai_translator = None
         self._last_request_time = 0
         self._min_request_interval = 0.5
+        self._lock = threading.Lock()
         
     def _get_googletrans_translator(self):
         """Lazy initialization of googletrans translator."""
@@ -72,12 +74,16 @@ class TranslationService:
         if not AI_TRANSLATOR_AVAILABLE:
             return None
         
-        backend = self.config.get("translation_backend", "google")
+        backend = self.config.get("translation_backend", "ai")
         if backend == "google":
             return None
         
         providers = self.config.get("ai_providers", [])
         current_idx = self.config.get("current_ai_provider")
+        
+        # If no provider selected but providers exist, use the first one
+        if current_idx is None and len(providers) > 0:
+            current_idx = 0
         
         if current_idx is not None and 0 <= current_idx < len(providers):
             provider_data = providers[current_idx]
@@ -141,6 +147,11 @@ class TranslationService:
         Returns:
             TranslationResult object.
         """
+        with self._lock:
+            return self._translate_impl(text, target_language, source_language)
+    
+    def _translate_impl(self, text: str, target_language: str = None, source_language: str = None) -> TranslationResult:
+        """Internal translate implementation (not thread-safe, use translate() instead)."""
         if not text or not text.strip():
             return TranslationResult(
                 text="",
@@ -192,12 +203,32 @@ class TranslationService:
         
         self._rate_limit()
         
-        backend = self.config.get("translation_backend", "offline")
+        backend = self.config.get("translation_backend", "google")
         
         actual_source_lang = detected_lang if (bidirectional and detected_lang) else source_language
         
         if backend == "offline":
-            if AI_TRANSLATOR_AVAILABLE and is_offline_available():
+            if AI_TRANSLATOR_AVAILABLE:
+                if not is_offline_available():
+                    logger.info("Offline translation not available, installing...")
+                    if install_offline_translator():
+                        logger.info("Offline translator installed, please restart the app")
+                        return TranslationResult(
+                            text="",
+                            source_language=actual_source_lang,
+                            target_language=final_target,
+                            error="Offline translator installed successfully. Please restart the app to use offline translation.",
+                            backend="Offline"
+                        )
+                    else:
+                        return TranslationResult(
+                            text="",
+                            source_language=actual_source_lang,
+                            target_language=final_target,
+                            error="Failed to install offline translator (SSL/Network error). Try manually: pip install translatepy OR pip install argostranslate",
+                            backend="Offline"
+                        )
+                
                 offline_translator = get_offline_translator()
                 try:
                     result_text = offline_translator.translate(text, actual_source_lang, final_target)
@@ -208,15 +239,7 @@ class TranslationService:
                             source_language=actual_source_lang,
                             target_language=final_target,
                             confidence=None,
-                            backend="Offline (Argos)"
-                        )
-                    else:
-                        return TranslationResult(
-                            text="",
-                            source_language=actual_source_lang,
-                            target_language=final_target,
-                            error="Offline translation not available for this language pair. Install language models.",
-                            backend="Offline"
+                            backend=f"Offline ({OFFLINE_BACKEND})"
                         )
                 except Exception as e:
                     logger.exception("Offline translation failed: %s", e)
@@ -227,17 +250,18 @@ class TranslationService:
                         error=f"Offline translation error: {str(e)}",
                         backend="Offline"
                     )
-            else:
-                return TranslationResult(
-                    text="",
-                    source_language=actual_source_lang,
-                    target_language=final_target,
-                    error="Offline translation not available. Install argostranslate: pip install argostranslate",
-                    backend="Offline"
-                )
+            
+            return TranslationResult(
+                text="",
+                source_language=actual_source_lang,
+                target_language=final_target,
+                error="Offline translation error. Try a different backend.",
+                backend="Offline"
+            )
         
-        if backend != "google":
+        if backend == "ai":
             ai_translator = self._get_ai_translator()
+            logger.info("AI backend=%s, ai_translator=%s", backend, ai_translator)
             if ai_translator:
                 try:
                     result_text = ai_translator.translate(text, source_language, final_target)
@@ -273,7 +297,7 @@ class TranslationService:
                     text="",
                     source_language=source_language,
                     target_language=final_target,
-                    error="AI translator not configured properly",
+                    error="AI translator not configured. Add an AI provider in Settings.",
                     backend="ai"
                 )
         

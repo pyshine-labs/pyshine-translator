@@ -162,13 +162,14 @@ pyshine-translator/
 
 ### Dependencies
 
-- PySide6 >= 6.5.0 (GUI)
 - googletrans == 4.0.0rc1 (Google Translate)
 - langdetect >= 1.0.9 (Language detection)
-- keyboard >= 0.13.5 (Global hotkeys)
 - pyautogui >= 0.9.54 (Clipboard simulation)
 - pynput >= 1.7.6 (Input handling)
+- pyperclip >= 1.8.0 (Clipboard access)
 - requests >= 2.31.0 (HTTP requests)
+- pywin32 >= 305 (Windows API, Windows only)
+- Pillow >= 9.0.0 (Image handling)
 
 ## Configuration Files
 
@@ -192,6 +193,18 @@ Logs are written to:
 - [Ollama](https://ollama.ai/) - Local LLM runtime
 
 ## Changelog
+
+### v1.4.0 (2026)
+- **Removed PySide6 dependency**: Now uses tkinter for GUI - lighter weight, faster installation
+- **Added 16 AI providers**: DeepSeek, Moonshot, Zhipu, Alibaba Qwen, Baidu ERNIE, Tencent Hunyuan, ByteDance Doubao, Minimax, SiliconFlow, OpenAI, Anthropic Claude, Groq, Together AI, OpenRouter, and Ollama
+- **Fixed proxy issues**: API calls now bypass proxy settings for reliable connections
+- **Improved key simulation**: Using pyautogui for reliable Ctrl+C/Ctrl+V operations
+- **Fixed 'c' character bug**: No more stray 'c' characters appearing before translations
+- **Window tracking**: Translations now paste to the correct source window
+- **Better formatting preservation**: Translations maintain original line breaks and structure
+- **Fixed infinite translation loop**: Added safeguards to prevent repeated auto-translations
+- **Improved clipboard handling**: More reliable clipboard operations with retries
+- **Better error handling**: Clearer error messages and fallback mechanisms
 
 ### v1.3.6 (2026)
 - **Suppressed OpenMP warnings**: Added warning filter to hide OpenMP error messages

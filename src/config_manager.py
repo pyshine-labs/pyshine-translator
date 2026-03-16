@@ -18,15 +18,23 @@ class ConfigManager:
         "target_language": "zh-CN",
         "source_language": "en",
         "bidirectional": True,
-        "hotkey": "ctrl+shift+t",
+        "hotkey": "ctrl+shift+space",
         "enabled": True,
         "log_level": "INFO",
         "use_official_api": False,
         "translation_backend": "offline",
-        "ai_providers": [],
-        "current_ai_provider": None,
+        "ai_providers": [
+            {
+                "name": "Ollama: llama3.1:8b",
+                "provider_type": "ollama",
+                "api_url": "http://localhost:11434",
+                "api_key": "",
+                "model": "llama3.1:8b",
+                "model_type": "chat"
+            }
+        ],
+        "current_ai_provider": 0,
         "offline_languages": [],
-        "auto_install_offline": True,
     }
     
     def __init__(self, config_dir: str = None, config_filename: str = "config.json"):

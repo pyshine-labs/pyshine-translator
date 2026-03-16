@@ -162,7 +162,7 @@ class SettingsDialog(QDialog):
         provider_edit_layout.addRow("Name:", self.provider_name_edit)
         
         self.provider_type_combo = QComboBox()
-        self.provider_type_combo.addItems(["openai", "ollama", "custom"])
+        self.provider_type_combo.addItems(["openai_compatible", "openai", "ollama", "custom"])
         self.provider_type_combo.currentTextChanged.connect(self.on_provider_type_changed)
         provider_edit_layout.addRow("Type:", self.provider_type_combo)
         
@@ -278,10 +278,10 @@ class SettingsDialog(QDialog):
         """Add a new custom provider."""
         provider = {
             "name": "New Provider",
-            "provider_type": "openai",
-            "api_url": "https://api.openai.com/v1",
+            "provider_type": "openai_compatible",
+            "api_url": "https://api.deepseek.com/v1",
             "api_key": "",
-            "model": "gpt-3.5-turbo",
+            "model": "deepseek-chat",
             "model_type": "chat"
         }
         self.add_provider_to_list(provider)
@@ -439,14 +439,20 @@ class SettingsDialog(QDialog):
         self.hotkey_edit.setText(config.get("hotkey", "ctrl+shift+t"))
         self.enabled_check.setChecked(config.get("enabled", True))
         
-        backend = config.get("translation_backend", "offline")
+        backend = config.get("translation_backend", "google")
         backend_map = {"offline": 0, "google": 1, "ai": 2}
-        self.backend_combo.setCurrentIndex(backend_map.get(backend, 0))
+        self.backend_combo.setCurrentIndex(backend_map.get(backend, 1))
         
         providers = config.get("ai_providers", [])
         self.providers_list.clear()
-        for provider in providers:
-            self.add_provider_to_list(provider)
+        
+        if not providers:
+            default_providers = get_default_providers()
+            for provider in default_providers:
+                self.add_provider_to_list(provider)
+        else:
+            for provider in providers:
+                self.add_provider_to_list(provider)
         
         current_idx = config.get("current_ai_provider")
         if current_idx is not None and 0 <= current_idx < self.providers_list.count():
