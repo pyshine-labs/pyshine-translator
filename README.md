@@ -1,12 +1,12 @@
 # PyShine Translator
 
-[![PyShine](https://img.shields.io/badge/PyShine.com-Official_Site-9cf)](https://pyshine.com)
-[![PyPI version](https://img.shields.io/pypi/v/pyshine-translator.svg)](https://pypi.org/project/pyshine-translator/)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/pyshine-labs/pyshine-translator)
+<a href="https://pyshine.com"><img src="https://img.shields.io/badge/PyShine.com-Official_Site-9cf" alt="PyShine"></a>
+<a href="https://pypi.org/project/pyshine-translator/"><img src="https://img.shields.io/pypi/v/pyshine-translator.svg" alt="PyPI version"></a>
+<a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.8+-blue.svg" alt="Python 3.8+"></a>
+<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+<a href="https://github.com/pyshine-labs/pyshine-translator"><img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg" alt="Platform"></a>
 
-**[🏠 PyShine.com](https://pyshine.com)** • **[📦 PyPI](https://pypi.org/project/pyshine-translator/)** • **[📖 GitHub](https://github.com/pyshine-labs/pyshine-translator)**
+<strong><a href="https://pyshine.com">🏠 PyShine.com</a></strong> • <strong><a href="https://pypi.org/project/pyshine-translator/">📦 PyPI</a></strong> • <strong><a href="https://github.com/pyshine-labs/pyshine-translator">📖 GitHub</a></strong>
 
 ---
 

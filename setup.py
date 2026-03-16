@@ -8,7 +8,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 if __name__ == "__main__":
     setup(
         name="pyshine_translator",
-        version="1.4.4",
+        version="1.4.5",
         description="Desktop translator with AI support - translate selected text with a global hotkey",
         long_description=long_description,
         long_description_content_type="text/markdown",
