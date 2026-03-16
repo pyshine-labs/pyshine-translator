@@ -1,13 +1,55 @@
 # PyShine Translator
 
 [![PyShine](https://img.shields.io/badge/PyShine.com-Official_Site-9cf)](https://pyshine.com)
+[![PyPI version](https://img.shields.io/pypi/v/pyshine-translator.svg)](https://pypi.org/project/pyshine-translator/)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/pyshine-labs/pyshine-translator)
 
-**[🏠 PyShine.com](https://pyshine.com)** • **[📦 PyPI](https://pypi.org/project/pyshine-translator/)** • **[📖 Documentation](https://github.com/pyshine-labs/pyshine-translator#readme)**
+**[🏠 PyShine.com](https://pyshine.com)** • **[📦 PyPI](https://pypi.org/project/pyshine-translator/)** • **[📖 GitHub](https://github.com/pyshine-labs/pyshine-translator)**
 
-A cross-platform desktop translator application that translates selected text using a global hotkey. Supports offline translation (CPU-compatible, no internet required), Google Translate, and AI providers (OpenAI, Ollama, and custom APIs).
+---
+
+**A powerful cross-platform desktop translator that translates selected text instantly with a global hotkey.**
+
+Select any text in any application, press `Ctrl+Shift+Space`, and get instant translation. Supports **16+ AI providers** including DeepSeek, OpenAI, Ollama, Moonshot, and more. Works offline with local translation models.
+
+```bash
+pip install pyshine-translator
+pyshine-translator
+```
+
+---
+
+## Why PyShine Translator?
+
+- **🚀 Instant Translation**: Select text → Press hotkey → Get translation. That's it.
+- **🤖 16+ AI Providers**: DeepSeek, OpenAI, Ollama, Moonshot, Zhipu, Alibaba Qwen, Baidu ERNIE, and more
+- **🌐 Offline Support**: Works without internet using local translation models
+- **🔄 Bidirectional**: Auto-detects language and translates both ways (English ↔ Chinese, etc.)
+- **💻 Cross-Platform**: Windows, macOS, and Linux
+- **⚙️ Customizable**: Configure hotkeys, languages, and AI providers via GUI
+- **🔒 Privacy First**: API keys stored locally, not uploaded anywhere
+
+## Supported AI Providers
+
+| Provider | Type | API Key Required |
+|----------|------|------------------|
+| **DeepSeek** | OpenAI-compatible | Yes |
+| **Moonshot AI (Kimi)** | OpenAI-compatible | Yes |
+| **Zhipu AI (GLM)** | OpenAI-compatible | Yes |
+| **Alibaba Qwen** | OpenAI-compatible | Yes |
+| **Baidu ERNIE** | OpenAI-compatible | Yes |
+| **Tencent Hunyuan** | OpenAI-compatible | Yes |
+| **ByteDance Doubao** | OpenAI-compatible | Yes |
+| **Minimax** | OpenAI-compatible | Yes |
+| **SiliconFlow** | OpenAI-compatible | Yes |
+| **OpenAI GPT-4/3.5** | OpenAI | Yes |
+| **Anthropic Claude** | OpenAI-compatible | Yes |
+| **Groq** | OpenAI-compatible | Yes |
+| **Together AI** | OpenAI-compatible | Yes |
+| **OpenRouter** | OpenAI-compatible | Yes |
+| **Ollama** | Local | No |
 
 ## Features
 

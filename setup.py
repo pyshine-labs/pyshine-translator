@@ -5,7 +5,7 @@ from setuptools import setup
 if __name__ == "__main__":
     setup(
         name="pyshine_translator",
-        version="1.4.0",
+        version="1.4.1",
         description="Desktop translator with AI support - translate selected text with a global hotkey",
         author="PyShine",
         author_email="python2ai@gmail.com",
