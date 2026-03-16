@@ -2,14 +2,24 @@
 """Setup script for pyshine-translator."""
 from setuptools import setup
 
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
+
 if __name__ == "__main__":
     setup(
         name="pyshine_translator",
-        version="1.4.1",
+        version="1.4.2",
         description="Desktop translator with AI support - translate selected text with a global hotkey",
+        long_description=long_description,
+        long_description_content_type="text/markdown",
         author="PyShine",
         author_email="python2ai@gmail.com",
         url="https://pyshine.com",
+        project_urls={
+            "Bug Tracker": "https://github.com/pyshine-labs/pyshine-translator/issues",
+            "Source Code": "https://github.com/pyshine-labs/pyshine-translator",
+            "Documentation": "https://github.com/pyshine-labs/pyshine-translator#readme",
+        },
         packages=["src"],
         package_data={"src": ["../icons/*.png"]},
         include_package_data=True,
