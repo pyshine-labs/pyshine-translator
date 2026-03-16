@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """Setup script for pyshine-translator."""
 from setuptools import setup
+import io
 
-with open("README.md", "r", encoding="utf-8") as fh:
+with io.open("README.md", encoding="utf-8") as fh:
     long_description = fh.read()
+    long_description = long_description.replace("\r", "")
 
 if __name__ == "__main__":
     setup(
         name="pyshine_translator",
-        version="1.4.5",
+        version="1.4.6",
         description="Desktop translator with AI support - translate selected text with a global hotkey",
         long_description=long_description,
         long_description_content_type="text/markdown",
